@@ -2,10 +2,23 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-const WIDTH = 800;
-const HEIGHT = 600;
-const RADIUS_CIRCLE = 10;
-const DOT_SPACING = 0.1 * RADIUS_CIRCLE; // spacing as a function of radius
+// 60 by 60 -- can separate into 2, 3, 4, 5, 6 parts
+const DOTS_X = 60;
+const DOTS_Y = 60;
+
+const RADIUS_CIRCLE = 8;
+const DOT_SPACING = -0.1 * RADIUS_CIRCLE; // spacing as a function of radius
+const MARGIN = 80;
+
+const WIDTH = DOTS_X*(2*RADIUS_CIRCLE + DOT_SPACING)+DOT_SPACING+MARGIN;
+const HEIGHT = DOTS_Y*(2*RADIUS_CIRCLE + DOT_SPACING)+DOT_SPACING+MARGIN;
+
+let rng_seed;
+
+window.addEventListener('load', function() {
+    rng_seed = Math.random();
+    resizeCanvas();
+});
 
 
 function makeRNG(seed) {
@@ -16,6 +29,7 @@ function makeRNG(seed) {
     return state / 0x100000000; // normalize to [0, 1)
   };
 }
+
 
 function resizeCanvas() {
     const dpr = window.devicePixelRatio || 1;
@@ -28,7 +42,6 @@ function resizeCanvas() {
 }
 
 
-// draws a dot (relative to top right of canvas)
 function drawDot(x, y, r, color, rng) {
 
     ctx.beginPath();
@@ -62,30 +75,57 @@ function drawDot(x, y, r, color, rng) {
     ctx.fill();
 }
 
+// todo: this is pretty bad! fix it?
+function generateColors(rng) {
+
+    // grab a hue on the color wheel
+    const hue1 = Math.floor(rng() * 360);
+
+    // grab things ~120 degrees apart
+    const hue2 = ((hue1 + 120 + (rng()-0.5)*50)) % 360;
+    const hue3 = ((hue1 + 240) +  (rng()-0.5)*50) % 360;
+
+    return [hue1, hue2, hue3]
+}
 
 
-function draw() {
+// returns 2d-matrix of 0,1,2 corresponding to color of dots
+function createDotMatrix(rng) {
+ 
+    let matrix = Array.from({ length: 60 }, () => Array(60).fill(0));
 
-    let rng = makeRNG('salmon of doubt')
+    for (let x = 0; x < DOTS_X; x++) {
+        for (let y = 0; y < DOTS_Y; y++) {
+            //matrix[x][y] = Math.floor(x / 20);
+            matrix[x][y] = Math.round(rng()*3)
+        }
+    }
 
-    let dotsX = Math.round(WIDTH/(2*RADIUS_CIRCLE + DOT_SPACING))
-    let dotsY = Math.round(HEIGHT/(2*RADIUS_CIRCLE + DOT_SPACING))
+    return matrix;
+}
+
+    
+function draw(matrix) {
+    
+    drawRng = makeRNG(rng_seed*100)
+
+    matrix = createDotMatrix(drawRng)
+    hues = generateColors(drawRng);
 
     ctx.clearRect(0, 0, WIDTH, HEIGHT);
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
     // draw the dots
-    for (let t = 0; t < dotsY; t++) {
-        for (let i = 0; i < dotsX; i++) {
-            drawDot(10+i*(2*RADIUS_CIRCLE + DOT_SPACING), 10+t*(2*RADIUS_CIRCLE + DOT_SPACING), RADIUS_CIRCLE, 'crimson', rng);
+    for (let t = 0; t < DOTS_Y; t++) {
+        for (let i = 0; i < DOTS_X; i++) {
+            drawDot(MARGIN/2 + RADIUS_CIRCLE+DOT_SPACING + i*(2*RADIUS_CIRCLE + DOT_SPACING), 
+                    MARGIN/2 + RADIUS_CIRCLE+DOT_SPACING + t*(2*RADIUS_CIRCLE + DOT_SPACING),
+                    RADIUS_CIRCLE, `hsl(${hues[matrix[i][t]]}, 100%, 50%)`, drawRng);
         }
     }
 
-    
-
-
 }
 
-resizeCanvas();
+
 window.addEventListener('resize', resizeCanvas);

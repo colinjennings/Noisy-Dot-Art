@@ -1,4 +1,5 @@
 
+
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
@@ -79,32 +80,75 @@ function drawDot(x, y, r, color, rng) {
 function generateColors(rng) {
 
     // grab a hue on the color wheel
-    const hue1 = Math.floor(rng() * 360);
+    //const hue1 = Math.floor(rng() * 360);
 
     // grab things ~120 degrees apart
-    const hue2 = ((hue1 + 120 + (rng()-0.5)*50)) % 360;
-    const hue3 = ((hue1 + 240) +  (rng()-0.5)*50) % 360;
+    //const hue2 = ((hue1 + 120 + (rng()-0.5)*50)) % 360;
+    //const hue3 = ((hue1 + 240) +  (rng()-0.5)*50) % 360;
 
-    return [hue1, hue2, hue3]
+    
+
+    return [20,180+65]
 }
 
 
 // returns 2d-matrix of 0,1,2 corresponding to color of dots
 function createDotMatrix(rng) {
- 
-    let matrix = Array.from({ length: 60 }, () => Array(60).fill(0));
 
+
+    // fill up the matrix (left side hue1, right side hue2)
+    let matrix = Array.from({ length: 60 }, () => Array(60).fill(0));
     for (let x = 0; x < DOTS_X; x++) {
         for (let y = 0; y < DOTS_Y; y++) {
-            //matrix[x][y] = Math.floor(x / 20);
-            matrix[x][y] = Math.round(rng()*3)
+            matrix[x][y] = Math.floor(x / 30);
         }
     }
 
+
+    bins = discreteGaussianPDF(40);
+    for (let i = 0; i < 40; i++) {
+        bins[i] = bins[i]*12.5951;
+    }
+    console.log(bins)
+
+    offsetLeft = 10;
+
+
+    for (let x = offsetLeft; x < 50; x++) {
+        for (let y = 0; y < DOTS_Y; y++) {
+            
+
+            let v = Math.random();
+            let switchDot = v > (1-bins[x-offsetLeft]);
+
+
+            if (switchDot) {
+                if (x < 30) {
+                    matrix[x][y] = 1;
+                }
+                else {
+                    matrix[x][y] = 0;
+                }
+            
+            
+            }
+
+        }
+    }
+
+
+
     return matrix;
+
+
+    
 }
 
     
+
+
+
+
 function draw(matrix) {
     
     drawRng = makeRNG(rng_seed*100)
